@@ -1,2 +1,7 @@
 i love v.
 hjn
+
+{
+  printf("ok");
+  return 0;
+}
