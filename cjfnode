@@ -1,6 +1,7 @@
 i love v.
 hjn
 
+int main(int a)
 {
   printf("ok");
   return 0;
