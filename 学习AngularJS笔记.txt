@@ -1,0 +1,151 @@
+1. 指令ng-bind和AngularJS表达式{{}}有异曲同工之妙，但不同之处就在于ng-bind是在angular解析渲染完毕后才将数据显示出来的。
+2. PS：使用花括号语法时，因为浏览器需要首先加载页面，渲染它，然后AngularJS才能把它解析成你期望看到的内容，所以对于首个页面中的数据绑定操作，建议采用ng-bind，以避免其未被渲染的模板被用户看到。
+3. ng-click="表达式"，ng-hide="表达式（逻辑表达式，结果true或false），0为false,非0为true"
+4. ng-bind用法举例：
+	1）<span ng-bind="quantity * cost"></span>
+	2）<p>姓名： <span ng-bind="firstName + ' ' + lastName"></span></p>
+	3）<p>姓名： {{ firstName + " " + lastName }}</p>
+5. <div ng-app="" ng-init="person={firstName:'John',lastName:'Doe'}">
+	对象person，person.firstName和person.lastName
+6. 对象创建：person={firstName:'John',lastName:'Doe'}
+	数组创建：points=[1,15,19,2,40]   取值时，points[2]
+7. AngularJS 完美支持数据库的CRUD（增加Create、读取Read、更新Update、删除Delete）应用程序。把实例中的对象想象成数据库中的记录。
+<ul>
+  <li ng-repeat="x in names">
+  {{ x.name + ', ' + x.country }}</li>
+</ul>
+8. ng-model 指令 绑定 HTML 元素 到应用程序数据。
+ng-model 指令也可以：
+    为应用程序数据提供类型验证（number、email、required）。
+    为应用程序数据提供状态（invalid、dirty、touched、error）。
+    为 HTML 元素提供 CSS 类。
+    绑定 HTML 元素到 HTML 表单。
+9. 你可以通过以下方式来调用指令：
+    元素名 <runoob-directive></runoob-directive>
+    属性 <div runoob-directive></div>
+    类名 <div class="runoob-directive"></div>
+    注释 <!-- directive: runoob-directive -->
+    <body ng-app="myApp">
+	<div class="runoob-directive"></div>
+	<script>
+	var app = angular.module("myApp", []);
+	app.directive("runoobDirective", function() {
+	    return {
+	        restrict : "C",
+	        template : "<h1>自定义指令!</h1>"
+	    };
+	});
+	</script>
+	<p><strong>注意：</strong> 你必须设置 <b>restrict</b> 的值为 "C" 才能通过类名来调用指令。</p>
+	</body>
+
+	<body ng-app="myApp">
+	<!-- directive: runoob-directive -->
+	<script>
+	var app = angular.module("myApp", []);
+	app.directive("runoobDirective", function() {
+	    return {
+	        restrict : "M",
+	        replace : true,
+	        template : "<h1>自定义指令!</h1>"
+	    };
+	});
+	</script>
+	<p><strong>注意：</strong> 我们需要在该实例添加 <strong>replace</strong> 属性， 否则评论是不可见的。</p>
+	<p><strong>注意：</strong> 你必须设置 <b>restrict</b> 的值为 "M" 才能通过注释来调用指令。</p>
+	</body>
+10. 限制指令的使用
+	restrict 值可以是以下几种:
+    E 作为元素名使用
+    A 作为属性使用
+    C 作为类名使用
+    M 作为注释使用
+	restrict 默认值为 EA, 即可以通过元素名和属性名来调用指令
+	
+	<body ng-app="myApp">
+	<runoob-directive></runoob-directive>
+	<div runoob-directive></div>
+	<script>
+	var app = angular.module("myApp", []);
+	app.directive("runoobDirective", function() {
+	    return {
+	        restrict : "A",
+	        template : "<h1>自定义指令!</h1>"
+	    };
+	});
+	</script>
+	<p><strong>注意：</strong> 通过设置 <strong>restrict</strong> 属性值为 "A" 来设置指令只能通过 HTML 元素的属性来调用。</p>
+	</body>
+11. ng-model 指令可以为应用数据提供状态值(invalid, dirty, touched, error):
+	<body>
+
+	<form ng-app="" name="myForm" ng-init="myText = 'test@runoob.com'">
+
+	Email:
+	<input type="email" name="myAddress" ng-model="m">
+	<p>编辑邮箱地址，查看状态的改变。</p>
+	<h1>状态</h1>
+	<p>Valid: {{myForm.myAddress.$valid}} (如果输入的值是合法的则为 true)。</p>
+	<p>Dirty: {{myForm.myAddress.$dirty}} (如果值改变则为 true)。</p>
+	<p>Touched: {{myForm.myAddress.$touched}} (如果通过触屏点击则为 true)。</p>
+	<p>error: {{myForm.myAddress.$error.email}} (如果不是邮件格式则为 true)。</p>
+		
+	</form>
+
+	</body>
+12. ng-model 指令基于它们的状态为 HTML 元素提供了 CSS 类：
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<meta charset="utf-8">
+	<script src="http://cdn.static.runoob.com/libs/angular.js/1.4.6/angular.min.js"></script> 
+	<style>
+	input.ng-invalid {
+	    background-color: lightblue;
+	}
+	</style>
+	</head>
+	<body>
+	<form ng-app="" name="myForm">
+	    输入你的名字:
+	    <input name="myName" ng-model="myText" required>
+	</form>
+	<p>编辑文本域，不同状态背景颜色会发送变化。</p>
+	<p>文本域添加了 required 属性，该值是必须的，如果为空则是不合法的。</p>
+	</body>
+	</html>
+13. ng-model 指令根据表单域的状态添加/移除以下类：
+    ng-empty
+    ng-not-empty
+    ng-touched
+    ng-untouched
+    ng-valid
+    ng-invalid
+    ng-dirty
+    ng-pending
+    ng-pristine
+
+    ng-invalid:未通过验证的表单
+
+	ng-valid:布尔型属性，它指示表单是否通过验证。如果表单当前通过验证，他将为true
+
+	ng-dirty:布尔值属性，表示用户是否修改了表单。如果为 ture，表示有修改过；false 表示修没有修改过
+
+	ng-touched:布尔值属性，表示用户是否和控件进行过交互
+
+	ng-pristine:布尔值属性，表示用户是否修改了表单。如果为ture，表示没有修改过；false表示修改过
+
+	ng-valid: 验证通过
+	ng-invalid: 验证失败
+	ng-valid-[key]: 由$setValidity添加的所有验证通过的值
+	ng-invalid-[key]: 由$setValidity添加的所有验证失败的值
+	ng-pristine: 控件为初始状态
+	ng-dirty: 控件输入值已变更
+	ng-touched: 控件已失去焦点
+	ng-untouched: 控件未失去焦点
+	ng-pending: 任何为满足$asyncValidators的情况
+14. 
+
+
+
+
