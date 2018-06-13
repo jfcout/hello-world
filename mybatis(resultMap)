@@ -1,0 +1,111 @@
+1. mybatis-config.xml的配置信息
+    主要描述的信息：
+      (1) 数据库相关的信息
+      (2) 映射文件的信息，即mapper文件的注册
+        比如：
+        <mappers>
+            <mapper resource="com/baizhi/mybatis/day2/UserDAOMapper.xml"/>
+            <mapper resource="o2o/PersonDAOMapper.xml"/>  
+            <mapper resource="o2o/PasswordDAOMapper.xml"/>  
+        </mappers>
+      (3) 别名 typeAlias
+          在mybatis-config.xml中的configuration标签中，添加typeAlias标签信息
+            <typeAliases>
+                <typeAlias alias="User" type="com.baizhi.mybatis.day1.User" />
+                <typeAlias alias="xxx" type="xxx" />
+            </typeAliases>
+      (4) 配置内容参数化（模仿spring）
+          存在问题：在mybatis-config.xml中存在需要经常修改的字符串信息(数据库相关)
+          解决方案：把mybatis-config.xml中存在的经常修改的字符串，从mybatis的配置文件中转移到一个更小的配置文件中，利于后续代码的维护。
+          1) .properties的配置文件（键值对）  放置位置无要求   不能写中文，如果非要用，点“Source”中写中文，最终存的时候用Unicode编码
+              举例 jdbc.properties文件：
+                driver = oracle.jdbc.oracleDriver
+                url = jdbc:oracle:thin:@localhost:1521:xe
+                username = hr
+                password = hr 
+          2) 在mybatis-config.xml中的configuration标签中，添加properties标签
+              <properties resource="com/baizhi/mybatis/day1/jdbc.properties"/>
+              <typeAliases>
+                <typeAlias alias="User" type="com.baizhi.mybatis.day1.User"/>
+              </typeAliases>
+              <environments default="oracle">
+                <environment id="oracle">
+                  <transactionManager type="JDBC"></transactionManager>
+                  <dataSource type="POOLED">
+                    <property name="driver" value="${driver}"
+                    <property name="url" value="${url}"
+                    <property name="username" value="${usrname}"/>
+                    <property name="password" value="${password}"/>
+                    </dataSource>
+                </environment>
+              <environments>
+2. resultMap(查询结果)
+    作用：发现数据库的查询结果与实体之间没有对应关系时，需要通过ResultMap进行映射处理。
+    (1) resultMap的单表操作：
+        1) 用resultMap解决当实体属性与表中的列名不一致
+        <mapper namespace="com.baizhi.mybatis.day2.UserDao(接口名)">
+            <resultMap id="userResultMap" type="User" >
+                <id property="id" column="t_id"/>  (id标签是主键)
+                <result property="name" column="t_name" /> 
+                <result property="password" column="t_password" />
+            </resultMap>
+            <select id="queryUserById" resultType="userResultMap">
+                select t_id,t_name,t_password
+                from t_user_s
+                where t_id=#{id}
+            </select>
+        </mapper>
+        2) 另一种简化方法（当实体属性与表中的列名不一致）
+            <mapper namespace="com.baizhi.mybatis.day2.UserDao(接口名)">
+                <select id="queryUserById" resultType="userResultMap">
+                    select t_id as id, t_name as name, t_password as password
+                    from t_user_s
+                    where t_id=#{id}
+                </select>
+            </mapper>
+    (2) resultMap的多表操作：
+        1) 实体间存在关系(通过属性体现 )  
+            关联关系 1:1, 1:* , *:*
+                1:1实体关系(双向关系)如下：
+                    Person              Passport
+                    id                  id
+                    name                serial
+                    birthday            expire
+                    (Passport pp)       (Person p) 
+        2) 表之间的关系(通过外键体现)
+            规律：1 父表 先插入
+                 * 外键 子表 先删除    
+            建表： Person              Passport
+                    id                  id
+                    name                serial
+                    birthday            expire 
+                                        person_id
+        3) PersonDAOMapper.xml文件                    
+            <resultMap id="personResultMap" type="Person" >
+                <id property="id" column="person_id"/>  (id标签是主键)
+                <result property="name" column="person_name" /> 
+                <result property="password" column="person_password" />
+                <result property="birthday" column="person_birthday" />
+                <association property="passport" javaType="Passport"> (对象作为属性,javaType说明对象类型)
+                    <id property="id" column="passport_id"/>  (id标签是主键)
+                    <result property="serial" column="passport_serial" /> 
+                    <result property="expire" column="passport_expire" />
+                </association>
+            </resultMap>
+ 
+    (3) 查询返回结果多组数据，用list对象接收
+        比如：
+        <resultMap id="" type="" >
+            <id property="" column=""/>  (id标签是主键)
+            <result property="" column="" /> 
+            <collection property="employees" ofType="Employee"> (集合作为属性，ofType说明集合元素的类型，注意：集合关系属性需要用new初始化)
+                <id property="id" column="passport_id"/>  (id标签是主键)
+                <result property="serial" column="passport_serial" /> 
+                <result property="expire" column="passport_expire" />
+            </collection>
+        </resultMap>
+    总结：
+      (1) 如果是单个关系属性，则使用<association property="passport" javaType="Passport">
+      (2) 如果是集合关系属性，则使用<collection property="employees" ofType="Employee">
+
+明天学习day3课程
