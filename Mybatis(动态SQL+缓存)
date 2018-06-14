@@ -1,0 +1,156 @@
+1. 表级约束
+    举例：
+    create table t_student(
+        id integer primary key,
+        name varchar2(12),
+        age integer
+    );
+    create table t_course(
+        id integer primary key,
+        name varchar2(12),
+        score integer
+    );
+    create table t_s_c(
+        student_id integer references t_student(id),
+        course_id integer references t_course(id),
+        -- 表级约束
+        primary key(student_id,course_id)
+    );
+
+2. 多表查询
+    举例：
+    <resultMap id="studentResultMap" type="Student">
+        <id property="id" column="student_id"/>
+        <result property="name" column="student_name"/>
+        <result property="age" column="student_age"/>
+        <collection property="courses" ofType="Course">
+            <id property="id" column="course_id"/>
+            <result property="name" column="course_name"/>
+            <result property="score" column="course_score"/>
+        </collection>
+    </resultMap>
+    <select id="queryStudentById" parameterType="int" resultMap="studentResultMap">
+        select s.id as student_id, s.name as student_name, c.id as course_id, c.name as course_name
+        from t_student s
+            inner join t_s_c sc
+            on s.id=sc.student_id
+            inner join t_course c
+            on sc.course_id=c.id
+        where s.id=#{id}
+    </select>
+3. sql片段  
+    <sql id="SELECT_T_USER">
+        select id,name,password,birthday
+    </sql>
+    <select id="queryUserById" parameterType="int" resultType="User">
+        <include refid="SELECT_T_USER"/>
+        from t_user 
+        where id=#{id} 
+    </select>
+
+4. where子句动态处理 (注意：id类型应该使用包装器) 
+    概念：在where子句中引入条件判断，从而动态的生成where子句
+    举例：(问题：如果三个判断都是空，会出现什么效果呢？)
+    <select id="queryUser" resultType="User">
+        <include refid="SELECT_T_USER" />
+        from t_user
+        <where>
+            <if test="id != null">    (id类型为包装器类型，即Integer，如果是基本类型，就不能用null来判断)
+                id = #{id}
+            </if>
+            <if test="name != null">
+                and name = #{name}
+            </if>
+            <if test="password != null">
+                and password = #{password}
+            </if>
+        </where>
+    </select>
+    
+
+5. where子句动态的第二种写法 
+    <select id="queryUser" resultType="User">
+        <include refid="SELECT_T_USER" />
+        from t_user
+        <trim prefix="where" prefixOverrides="and|or">  (忽略最前面的and和or, 而suffixOverides表示忽略后面的)
+            <if test="id != null">    (id类型为包装器类型，即Integer，如果是基本类型，就不能用null来判断)
+                id = #{id}
+            </if>
+            <if test="name != null">
+                and name = #{name}
+            </if>
+            <if test="password != null">
+                and password = #{password}
+            </if>
+        </trim>
+    </select>
+
+6. update子句动态处理
+    <update id="update" parameterType="User">
+        update t_user
+        <set>
+            <if test="name!=null">
+                name=#{name},   
+            </if>
+            <if test="password!=null">
+                password=#{password}
+            </if>
+        </set>
+        where id=#{id}
+    </update>  
+
+7. update子句动态处理的第二种写法
+    <update id="update" parameterType="User">
+        update t_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="name!=null">
+                name=#{name},   
+            </if>
+            <if test="password!=null">
+                password=#{password}
+            </if>
+        </trim>
+        where id=#{id}
+    </update>  
+
+8. foreach遍历 (场景：批量操作，比如批量删除。特别注意：批量插入Oracle和MySql处理不同 )     
+    解决的问题：MyBatis批量问题。比如一次想查询id为1,3,5这些user对象
+    select * from t_user where id in (1,3,5)
+    List<User> users UserDAO.queryUserByIds(List<Integer> ids)
+    
+    <select id="queryUserByIds" resultType="User">
+        select *
+        from t_user
+        where id in
+        <foreach collection="list" open="(" item="item" separator="," close=")">  (separator表示上述SQL中1,3,5之间的分隔符)
+            #{item}
+        </foreach>
+    </select>
+
+9. Mybatis的缓存（cache）
+    Mybatis也可以跟其他的缓存框架一起做集成，比如EhCache,redis结合
+    cache:基于内存的缓冲存储
+    redis：基于内存的键值对存储
+    代码 程序 部署到 tomcat运行
+    编码步骤：
+    (1) 激活MyBatis的全局缓存
+        在mybatis-config.xml中添加settings标签
+        <settings>
+            <setting name="cacheEnabled" value="true"/>
+        </settings>
+    (2) 配置具体需要缓存的数据
+        对应的Mapper文件中加入cache标签
+        <cache></cache>
+    (3) 实体类要做特殊处理 (为什么要这个操作原因是cache有“唤出”策略（有很多算法），将对象以二进制形式保存到文件系统，所以必须做“序列化”)   
+        举例：
+        public class User  implements Serializable{
+            private Integer id;
+            ...
+            ...
+        }
+    (4) 注意：
+        1) 只有在SqlSession关闭的时候，MyBatis才会把查询的数据放置缓存中。
+        2) 脏数据问题，MyBatis在事务commit时自动清空缓存数据
+    (5) 最佳实践
+        查询方法需要在调用完成之后，关闭SqlSession，确保查询的数据可以进行全局缓存
+        增删改操作：调用完成后，进行事务的提交
